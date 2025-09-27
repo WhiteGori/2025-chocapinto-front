@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000"; // Express + Prisma (tu server.js)
+import { API_URL } from "./env.js";
 
 const registerForm = document.getElementById("registerForm");
 if (registerForm) {
@@ -21,7 +21,7 @@ if (registerForm) {
 
             if (result.success) {
                 alert(result.message);
-                window.location.href = '../html/login.html';
+                window.location.href = '../html/index.html';
             } else {
                 document.getElementById("message").innerText = result.message || "Error en el registro";
             }
