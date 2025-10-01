@@ -21,21 +21,18 @@ import { API_URL } from "./env.js";
 
                 data.clubs.forEach(club => {
                     const esMiembro = club.members.some(m => m.username === username);
+                    const img= club.imagen || '../images/BooksyLogo.png';
                      const esCreador = club.ownerUsername === username; // <-- compara con el creador
                     const clubCard = document.createElement("div");
                     clubCard.className = "section-card club-card";
-                      clubCard.innerHTML = `<div class="club-logo club-logo-default">
-            <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-                <rect x="4" y="8" width="13" height="22" rx="3" fill="#2c5a91"/>
-                <rect x="21" y="8" width="13" height="22" rx="3" fill="#5fa8e9"/>
-                            <rect x="18" y="8" width="2" height="22" fill="#e6eafc"/>
-                        </svg>
+                    clubCard.innerHTML = `<div class="club-logo club-logo-default" style="width:70px;height:70px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f5f6fa;border-radius:50%;margin:0 auto 10px auto;">
+                        <img src="${img}" alt="Logo del club" style="width:100%;height:100%;object-fit:contain;object-position:center;display:block;">
                     </div>
                     <h3>${club.name}</h3>
                     <p>${club.description}</p>
                     ${esMiembro ? '<span style="color:#0984e3;font-weight:700;">Ya eres miembro</span>' : '<button class="unirme-btn">Unirme</button>'}
                     ${esCreador ? '<button class="editar-btn">Editar</button>' : ''}
-                `;
+                    `;
                     if (esMiembro) {
         document.querySelector(".mis-clubes-grid").appendChild(clubCard);
         // 👉 si soy miembro, al hacer click en toda la tarjeta voy al club
@@ -140,16 +137,26 @@ import { API_URL } from "./env.js";
                 data.books.forEach(libro => {
                     const card = document.createElement("div");
                     card.className = "recomendacion-card";
+                    card.style.background = "rgba(255,255,255,0.15)";
+                    card.style.backdropFilter = "blur(8px)";
+                    card.style.boxShadow = "0 8px 32px 0 rgba(44,90,145,0.12)";
+                    card.style.borderRadius = "18px";
+                    card.style.padding = "1rem";
+                    card.style.display = "flex";
+                    card.style.flexDirection = "column";
+                    card.style.alignItems = "center";
+                    card.style.justifyContent = "flex-start";
+                    card.style.width = "100%";
+                    card.style.maxWidth = "200px";
+                    card.style.minHeight = "280px";
+                    card.style.position = "relative";
+                    card.style.border = "1px solid rgba(44,90,145,0.08)";
                     card.innerHTML = `
-                        <div style="width:100%;display:flex;justify-content:center;margin-bottom:10px;">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                                <rect x="8" y="12" width="16" height="28" rx="4" fill="#2c5a91"/>
-                                <rect x="28" y="12" width="12" height="28" rx="4" fill="#5fa8e9"/>
-                                <rect x="24" y="12" width="4" height="28" fill="#e6eafc"/>
-                            </svg>
+                        <div style="width:100%;display:flex;justify-content:center;margin-bottom:14px;">
+                            <img src="${libro.portada ? libro.portada : '../images/BooksyLogo.png'}" alt="Portada del libro" style="width:90px;height:130px;object-fit:cover;object-position:center;border-radius:10px;box-shadow:0 4px 24px rgba(44,90,145,0.10);background:rgba(245,246,250,0.7);">
                         </div>
-                        <h4>${libro.title}</h4>
-                        <p>${libro.author ? libro.author : "Autor desconocido"}</p>
+                        <h4 style="margin:0 0 6px 0;font-size:1.08rem;color:#2c5a91;text-align:center;line-height:1.2;text-shadow:0 2px 12px rgba(44,90,145,0.10);">${libro.title}</h4>
+                        <p style="margin:0 0 8px 0;font-size:0.97rem;color:#636e72;text-align:center;text-shadow:0 2px 12px rgba(44,90,145,0.08);">${libro.author ? libro.author : "Autor desconocido"}</p>
                     `;
                     grid.appendChild(card);
                 });
@@ -206,5 +213,49 @@ async function buscarLibrosGoogleBooksAPI(query) {
     } catch (error) {
         console.error("Error al buscar libros en Google Books:", error);
         return [];
+    }
+}
+
+function mostrarLibros(libros) {
+    const librosList = document.getElementById('libros-list');
+    librosList.innerHTML = "";
+
+    if (libros.length > 0) {
+        libros.forEach(libro => {
+            const card = document.createElement('div');
+            card.className = 'libro-card';
+            card.style.background = '#fff';
+            card.style.borderRadius = '16px';
+            card.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.1)';
+            card.style.padding = '1rem';
+            card.style.display = 'flex';
+            card.style.flexDirection = 'column';
+            card.style.alignItems = 'center';
+            card.style.justifyContent = 'flex-start';
+            card.style.border = '1px solid #eaf6ff';
+            card.style.width = '100%';
+            card.style.maxWidth = '200px';
+            card.style.minHeight = '300px';
+            card.style.position = 'relative';
+
+            const categoriasHTML = libro.categorias
+                .map(cat => `<span style="background:#eaf6ff;color:#2c5a91;padding:2px 6px;border-radius:8px;font-size:0.8rem;margin-right:4px;">${cat.nombre}</span>`)
+                .join(" ");
+
+            card.innerHTML = `
+                <div style='width:100%;display:flex;flex-direction:column;align-items:center;'>
+                    ${libro.portada ? `<img src='${libro.portada}' style='width:100%;height:auto;border-radius:8px;box-shadow:0 2px 8px rgba(0, 0, 0, 0.1);margin-bottom:1rem;'>` : `<div style='width:100%;height:150px;background:#eaf6ff;border-radius:8px;margin-bottom:1rem;'></div>`}
+                    <div style='text-align:center;'>
+                        <strong style='color:#2c5a91;font-size:1.1rem;'>${libro.title}</strong>
+                        ${libro.author ? `<br><span style="color:#636e72;font-size:0.9rem;">de ${libro.author}</span>` : ''}
+                        <div style="margin-top:6px;">${categoriasHTML}</div>
+                    </div>
+                </div>
+            `;
+
+            librosList.appendChild(card);
+        });
+    } else {
+        librosList.innerHTML = '<div style="color:#636e72;">No hay libros disponibles.</div>';
     }
 }
