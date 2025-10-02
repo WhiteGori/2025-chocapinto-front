@@ -390,7 +390,7 @@ function mostrarSolicitudes(club) {
             solicitudesList.innerHTML = '';
             pendientes.forEach(solicitud => {
                 const item = document.createElement('div');
-                item.style.cssText = 'background:#eaf6ff;padding:1rem 1.2rem;border-radius:10px;display:flex;align-items:center;justify-content:space-between;min-width: 0;';
+                item.style.cssText = 'background:#eaf6ff;padding:1rem 1.2rem;border-radius:10px;display:flex;align-items:center;justify-content:space-between;min-width: 0;flex-direction:column;gap: 0.8rem; ';
                 item.innerHTML = `<span style='color:#2c5a91;font-weight:600;'>${solicitud.username}</span>`;
                 const btns = document.createElement('div');
                 btns.style.display = 'flex';
