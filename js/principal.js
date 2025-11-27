@@ -317,13 +317,15 @@ async function manejarSolicitudIngreso(event, clubId, username) {
         
         if (data.success) {
             showNotification("success", "Solicitud enviada. Espera la aprobación del moderador.");
-            
-            // Cambiar estado del botón
+
             const btn = event.target;
-            btn.textContent = "Solicitud enviada";
-            btn.disabled = true;
-            btn.style.background = "#636e72";
-            btn.style.cursor = "not-allowed";
+
+            // ✅ Reemplazar botón por badge (evita tick gigante)
+            const badge = document.createElement("span");
+            badge.className = "miembro-tag";
+            badge.textContent = "Solicitud enviada";
+
+            btn.replaceWith(badge);
         } else {
             showNotification("error", data.message || "No se pudo enviar la solicitud.");
         }
