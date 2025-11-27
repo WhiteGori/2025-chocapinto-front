@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // =======================
   // 1) HEADER BASE
   // =======================
-  initAppHeader({ showBackButton: true });
+  initAppHeader();
 
   // =======================
   // 2) Inicializar módulos UI
@@ -61,25 +61,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       hideLoader();
 
-      if (!window.clubData) {
-        console.warn("⚠️ renderClub terminó pero clubData es null");
-        return;
-      }
+      if (window.clubData) {
+        const clubData = window.clubData;
 
-      const clubData = window.clubData;
+        const clubLogo = clubData.imagen || null; // viene del campo imagen del esquema
 
-      // ========================
-      // 4) Configurar header (nombre, miembros)
-      // ========================
-      setHeaderContext({
-        icon: "📚",
-        title: clubData.name,
-        subtitle: `${clubData.members?.length || 0} miembros`,
-      });
+        setHeaderContext({
+          icon: clubLogo || "📚",   // si no hay imagen, cae al emoji
+          title: clubData.name || "Club de lectura",
+          subtitle: `${clubData.members?.length || 0} miembros`,
+        });
+     }
 
-      // ========================
-      // 5) DETERMINAR SI ES ADMIN
-      // ========================
+
       const userId = parseInt(localStorage.getItem("userId"));
       const esAdmin = window.canUserManageClub
         ? window.canUserManageClub(clubData, userId)

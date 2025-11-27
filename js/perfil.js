@@ -2,6 +2,20 @@ import { API_URL } from "./env.js";
 import { showNotification } from "../componentes/notificacion.js";
 import { showLoader, hideLoader } from "../componentes/loader.js";
 
+const LOGIN_URL = "index.html";
+
+// Configuración de avatares por nivel
+const AVATARS_POR_NIVEL = {
+    1: ['DetectiveHombre.jpg', 'DetectiveMujer.jpg'], // Nivel 1: Solo los dos grandes
+    2: ['DetectiveHombre.jpg', 'DetectiveMujer.jpg', 'AventureroFantasia.jpg', 'Exploradora.jpg'], // Nivel 2: Los 5 grandes
+    3: ['DetectiveHombre.jpg', 'DetectiveMujer.jpg', 'AventureroFantasia.jpg', 'Exploradora.jpg', 'Filosofo.jpg'],
+    4: ['DetectiveHombre.jpg', 'DetectiveMujer.jpg', 'AventureroFantasia.jpg', 'Exploradora.jpg', 'Filosofo.jpg', 'ElfaArquera.jpg'],
+    5: ['DetectiveHombre.jpg', 'DetectiveMujer.jpg', 'AventureroFantasia.jpg', 'Exploradora.jpg', 'Filosofo.jpg', 'ElfaArquera.jpg', 'Hechizera2.jpg', 'Mago.jpg'],
+    6: ['DetectiveHombre.jpg', 'DetectiveMujer.jpg', 'AventureroFantasia.jpg', 'Exploradora.jpg', 'Filosofo.jpg', 'ElfaArquera.jpg', 'Hechizera2.jpg', 'Mago.jpg', 'Vampiro.jpg', 'Hechizera.jpg'],
+    7: ['DetectiveHombre.jpg', 'DetectiveMujer.jpg', 'AventureroFantasia.jpg', 'Exploradora.jpg', 'Filosofo.jpg', 'ElfaArquera.jpg', 'Hechizera2.jpg', 'Mago.jpg', 'Vampiro.jpg', 'Hechizera.jpg', 'Cyborg.jpg', 'Filosofo.jpg'],
+    8: ['DetectiveHombre.jpg', 'DetectiveMujer.jpg', 'AventureroFantasia.jpg', 'Exploradora.jpg', 'Filosofo.jpg', 'ElfaArquera.jpg', 'Hechizera2.jpg', 'Mago.jpg', 'Vampiro.jpg', 'Hechizera.jpg', 'Cyborg.jpg', 'Filosofo.jpg', 'Reina.jpg'],
+    9: ['DetectiveHombre.jpg', 'DetectiveMujer.jpg', 'AventureroFantasia.jpg', 'Exploradora.jpg', 'Filosofo.jpg', 'ElfaArquera.jpg', 'Hechizera2.jpg', 'Mago.jpg', 'Vampiro.jpg', 'Hechizera.jpg', 'Cyborg.jpg', 'Filosofo.jpg', 'Reina.jpg', 'SilverShroud.jpg'],
+};
 
 //Inicializador de pagina - mostrar loader inicial
 showLoader("Iniciando perfil...");
@@ -60,7 +74,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const currentUsername = localStorage.getItem("username");
     if (!currentUsername) {
         hideLoader();
-        window.location.href = "index.html";
+        window.location.href = "LOGIN_URL";
         return;
     }
     
@@ -80,6 +94,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             const email = data.user.email || "Email no disponible";
             const role = data.user.role || "No asignado";
             
+            // Guardar userId en localStorage si no existe
+            if (data.user.id && !localStorage.getItem("userId")) {
+                localStorage.setItem("userId", data.user.id.toString());
+            }
+            
             // Sidebar
             document.getElementById("sidebar-name").textContent = username; 
             document.getElementById("info-role").textContent = role;
@@ -88,6 +107,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             // Formulario de Edición
             document.getElementById("username").value = username;
             document.getElementById("email").value = email;
+            
+            // Cargar avatar actual
+            await cargarAvatarActual();
             
             // Simular un pequeño delay para mejor UX
             setTimeout(() => {
@@ -229,7 +251,7 @@ document.getElementById("deleteAccountBtn").addEventListener("click", async () =
             
             setTimeout(() => {
                 hideLoader();
-                window.location.href = "index.html";
+                window.location.href = LOGIN_URL;
             }, 1500);
         } else {
             hideLoader();
@@ -243,6 +265,48 @@ document.getElementById("deleteAccountBtn").addEventListener("click", async () =
 });
 
 
+document.addEventListener("DOMContentLoaded", () => {
+
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      confirmarCerrarSesion();
+    });
+  }
+
+});
+
+function confirmarCerrarSesion() {
+  if (window.mostrarConfirmacion) {
+    window.mostrarConfirmacion(
+      "Cerrar sesión",
+      "¿Estás seguro de que querés cerrar sesión?",
+      cerrarSesion,
+      null,
+      {
+        confirmText: "Cerrar sesión",
+        cancelText: "Cancelar",
+        confirmClass: "red-btn",
+        cancelClass: "gray-btn"
+      }
+    );
+  } else {
+    const ok = confirm("¿Estás seguro de que querés cerrar sesión?");
+    if (ok) cerrarSesion();
+  }
+}
+
+function cerrarSesion() {
+  localStorage.removeItem("userId");
+  localStorage.removeItem("username");
+  localStorage.removeItem("email");
+  localStorage.removeItem("token");
+  localStorage.removeItem("role");
+
+  window.location.href = LOGIN_URL;
+}
+
 // --- 7. LÓGICA DE CARGA DE MIS CLUBES (NUEVA FUNCIÓN) ---
 
 async function loadMyClubs() {
@@ -250,6 +314,7 @@ async function loadMyClubs() {
     const currentUsername = localStorage.getItem("username");
     const clubsListContainer = document.getElementById("clubs-list");
     clubsListContainer.innerHTML = ''; // Limpia el contenido anterior
+    
 
     try {
         // Este FETCH requiere el endpoint /user/{username}/clubs en tu backend
@@ -263,6 +328,7 @@ async function loadMyClubs() {
         
         if (data.success && data.clubs) {
             const clubs = data.clubs;
+        
 
             if (clubs.length === 0) {
                 clubsListContainer.innerHTML = '<p class="no-clubs-message">Aún no estás suscrito a ningún club. ¡Busca uno!</p>';
@@ -270,17 +336,28 @@ async function loadMyClubs() {
                 clubs.forEach(club => {
                     // Determinar el texto de rol a mostrar
                     const roleText = club.role === 'OWNER' ? 'Dueño del Club' : club.role;
-                    
                     const clubCard = `
-                        <div class="club-card">
-                            <h3>${club.name}</h3>
-                            <p><strong>Rol:</strong> ${roleText}</p>
-                            <p><strong>Se unió el:</strong> ${new Date(club.joinedAt).toLocaleDateString()}</p>
-                            <div class="card-actions">
-                                <button class="btn-primary-club">Ir al Club</button>
-                                <button class="btn-secondary-club">${club.role === 'OWNER' ? 'Administrar' : 'Gestionar'}</button>
+                        
+                        <div class="club-card-row">
+
+                            <img class="club-photo-small"
+                                src="${club.imagen || '../images/default-club.png'}"
+                                alt="Foto del club">
+
+                            <div class="club-info">
+                                <h3 class="club-name">${club.name}</h3>
+
+                                <p class="club-detail"><strong>Rol:</strong> ${roleText}</p>
+                                <p class="club-detail"><strong>Se unió el:</strong> ${new Date(club.joinedAt).toLocaleDateString()}</p>
+
+                                <button class="btn-primary-club club-button"
+                                    onclick="window.location.href='club_lectura.html?clubId=${club.id}'">
+                                    Ir al Club
+                                </button>
                             </div>
+
                         </div>
+                    
                     `;
                     clubsListContainer.innerHTML += clubCard;
                 });
@@ -299,3 +376,230 @@ async function loadMyClubs() {
         showNotification("error", "Error de conexión al cargar los clubes.");
     }
 }
+
+// Funciones del Modal de Avatar
+async function abrirModalAvatar() {
+    const modal = document.getElementById('modalSeleccionAvatar');
+    if (!modal) return;
+    
+    // Obtener el nivel actual del usuario
+    const userLevel = await obtenerNivelUsuario();
+    
+    if (userLevel === null) {
+        showNotification("error", "No se pudo obtener tu nivel actual");
+        return;
+    }
+    
+    // Generar el HTML del modal con avatares filtrados por nivel
+    generarGridAvataresPorNivel(userLevel);
+    
+    modal.style.display = 'flex';
+    marcarAvatarActual();
+}
+
+function cerrarModalAvatar() {
+    const modal = document.getElementById('modalSeleccionAvatar');
+    if (modal) {
+        modal.style.display = 'none';
+        // Quitar selección visual
+        document.querySelectorAll('.avatar-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+    }
+}
+
+// Función para obtener el nivel actual del usuario
+async function obtenerNivelUsuario() {
+    try {
+        const currentUsername = localStorage.getItem("username");
+        if (!currentUsername) return null;
+        
+        const res = await fetch(`${API_URL}/user/${currentUsername}`);
+        const data = await res.json();
+        
+        if (data.success && data.user && data.user.level) {
+            return data.user.level;
+        }
+        return 1; // Nivel por defecto si no se encuentra
+    } catch (error) {
+        console.error("Error obteniendo nivel del usuario:", error);
+        return 1; // Nivel por defecto en caso de error
+    }
+}
+
+// Función para generar el grid de avatares según el nivel
+function generarGridAvataresPorNivel(userLevel) {
+    const avatarGrid = document.querySelector('.avatar-grid');
+    if (!avatarGrid) return;
+    
+    // Obtener avatares disponibles para el nivel del usuario
+    let avatarsDisponibles = [];
+    for (let nivel = 1; nivel <= userLevel; nivel++) {
+        if (AVATARS_POR_NIVEL[nivel]) {
+            avatarsDisponibles = [...new Set([...avatarsDisponibles, ...AVATARS_POR_NIVEL[nivel]])];
+        }
+    }
+    
+    // Si el nivel es muy alto, mostrar todos
+    if (userLevel > 10) {
+        avatarsDisponibles = Object.values(AVATARS_POR_NIVEL).flat();
+        avatarsDisponibles = [...new Set(avatarsDisponibles)]; // Remover duplicados
+    }
+    
+    // Todos los avatares posibles con sus detalles
+    const todosLosAvatares = [
+        { archivo: 'DetectiveHombre.jpg', nombre: 'Detective Hombre', nivelRequerido: 1 },
+        { archivo: 'DetectiveMujer.jpg', nombre: 'Detective Mujer', nivelRequerido: 1 },
+        { archivo: 'AventureroFantasia.jpg', nombre: 'Aventurero de Fantasia', nivelRequerido: 2 },
+        { archivo: 'Exploradora.jpg', nombre: 'Exploradora', nivelRequerido: 2 },
+        { archivo: 'Filosofo.jpg', nombre: 'Filosofo', nivelRequerido: 3 },
+        { archivo: 'ElfaArquera.jpg', nombre: 'ElfaArquera', nivelRequerido: 4 },
+        { archivo: 'Hechizera2.jpg', nombre: 'Hechizera', nivelRequerido: 5 },
+        { archivo: 'Mago.jpg', nombre: 'Mago', nivelRequerido: 5 },
+        { archivo: 'Vampiro.jpg', nombre: 'Vampiro', nivelRequerido: 6 },
+        { archivo: 'Hechizera.jpg', nombre: 'Bruja', nivelRequerido: 6 },
+        { archivo: 'Cyborg.jpg', nombre: 'Cyborg', nivelRequerido: 7 },
+        { archivo: 'Filosofo.jpg', nombre: 'Filosofo', nivelRequerido: 7 },
+        { archivo: 'Reina.jpg', nombre: 'Reina', nivelRequerido: 8 },
+        { archivo: 'SilverShroud.jpg', nombre: 'SilverShroud', nivelRequerido: 9 },
+    ];
+    
+    // Primero crear el HTML de información del nivel
+    const levelInfoHTML = `
+        <div class="avatar-level-info">
+            <h4>🌟 Tu nivel actual: ${userLevel}</h4>
+            <p>Avatares disponibles: ${avatarsDisponibles.length} de ${todosLosAvatares.length}</p>
+        </div>
+    `;
+    
+    // Luego generar HTML de avatares
+    let avatarsHTML = '';
+    todosLosAvatares.forEach(avatar => {
+        const disponible = avatarsDisponibles.includes(avatar.archivo);
+        const clases = `avatar-option ${disponible ? 'available' : 'locked'}`;
+        const onClick = disponible ? `seleccionarAvatar('${avatar.archivo}')` : `mostrarAvatarBloqueado('${avatar.nombre}', ${avatar.nivelRequerido})`;
+        
+        avatarsHTML += `
+            <div class="avatar-item">
+                <img src="../images/avatars/${avatar.archivo}" 
+                     class="${clases}" 
+                     onclick="${onClick}" 
+                     alt="${avatar.nombre}"
+                     title="${disponible ? avatar.nombre : `${avatar.nombre} (Nivel ${avatar.nivelRequerido} requerido)`}">
+                ${!disponible ? `<div class="avatar-lock">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>Nivel ${avatar.nivelRequerido}</span>
+                </div>` : ''}
+            </div>
+        `;
+    });
+    
+    // Insertar la información del nivel antes del grid
+    const modalContent = avatarGrid.parentElement;
+    
+    // Verificar si ya existe el panel de información y eliminarlo
+    const existingInfo = modalContent.querySelector('.avatar-level-info');
+    if (existingInfo) {
+        existingInfo.remove();
+    }
+    
+    // Insertar la nueva información antes del grid de avatares
+    avatarGrid.insertAdjacentHTML('beforebegin', levelInfoHTML);
+    
+    // Actualizar solo el contenido del grid con los avatares
+    avatarGrid.innerHTML = avatarsHTML;
+}
+
+// Función para mostrar mensaje cuando se intenta seleccionar un avatar bloqueado
+function mostrarAvatarBloqueado(nombreAvatar, nivelRequerido) {
+    showNotification("warning", `¡${nombreAvatar} se desbloquea en el Nivel ${nivelRequerido}! Sigue leyendo para alcanzarlo 📚`);
+}
+
+function marcarAvatarActual() {
+    const currentAvatarImg = document.getElementById('currentAvatarImg');
+    if (currentAvatarImg && currentAvatarImg.src) {
+        const currentSrc = currentAvatarImg.src;
+        const filename = currentSrc.split('/').pop();
+        
+        document.querySelectorAll('.avatar-option.available').forEach(option => {
+            option.classList.remove('selected');
+            if (option.src.includes(filename)) {
+                option.classList.add('selected');
+            }
+        });
+    }
+}
+
+async function seleccionarAvatar(nombreArchivo) {
+    const userId = localStorage.getItem("userId");
+    
+    if (!userId) {
+        showNotification("error", "No se encontró el ID del usuario");
+        return;
+    }
+    
+    try {
+        showLoader("Actualizando avatar...");
+        
+        const res = await fetch(`${API_URL}/users/${userId}/update-avatar`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ avatarName: nombreArchivo })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            // Actualizar la imagen en la pantalla inmediatamente
+            const avatarImg = document.getElementById('currentAvatarImg');
+            const defaultIcon = document.getElementById('defaultAvatarIcon');
+            
+            if (avatarImg && defaultIcon) {
+                avatarImg.src = data.avatar;
+                avatarImg.style.display = 'block';
+                defaultIcon.style.display = 'none';
+            }
+            
+            showNotification("success", "¡Avatar actualizado correctamente!");
+            cerrarModalAvatar();
+        } else {
+            showNotification("error", data.message || "Error al actualizar el avatar");
+        }
+    } catch (error) {
+        console.error("Error al actualizar avatar:", error);
+        showNotification("error", "Error de conexión al actualizar el avatar");
+    } finally {
+        hideLoader();
+    }
+}
+
+// Función para cargar el avatar actual del usuario
+async function cargarAvatarActual() {
+    const currentUsername = localStorage.getItem("username");
+    if (!currentUsername) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/user/${currentUsername}`);
+        const data = await res.json();
+        
+        if (data.success && data.user && data.user.avatar) {
+            const avatarImg = document.getElementById('currentAvatarImg');
+            const defaultIcon = document.getElementById('defaultAvatarIcon');
+            
+            if (avatarImg && defaultIcon) {
+                avatarImg.src = data.user.avatar;
+                avatarImg.style.display = 'block';
+                defaultIcon.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error("Error al cargar avatar actual:", error);
+        // Si hay error, mantener el ícono por defecto
+    }
+}
+
+// Exponer funciones globalmente para el HTML
+window.abrirModalAvatar = abrirModalAvatar;
+window.cerrarModalAvatar = cerrarModalAvatar;
+window.seleccionarAvatar = seleccionarAvatar;
+window.mostrarAvatarBloqueado = mostrarAvatarBloqueado;
