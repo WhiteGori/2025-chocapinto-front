@@ -45,30 +45,16 @@ async function cargarClubesExploracion() {
             // 1. Creamos la tarjeta
             const clubCard = crearTarjetaClub(club, esMiembro, esCreador, img);
 
-            data.clubs.forEach(club => {
-            const esMiembro = club.members.some(m => m.username === username);
-            const esCreador = club.ownerUsername === username;
-            const img = club.imagen || '../images/BooksyLogo.png';
-            
-            const clubCard = crearTarjetaClub(club, esMiembro, esCreador, img);
-            
-            // Agregar a la grilla correspondiente
             if (esMiembro) {
-                misClubesGrid.appendChild(clubCard);
-                // Añadir navegación al hacer click en la tarjeta
                 clubCard.addEventListener("click", (e) => {
-                    if (!e.target.classList.contains("editar-btn")) {
-                        window.location.href = `club_lectura.html?clubId=${club.id}`;
-                    }
-                });
-            } else if (clubesAgregados < 1) { // LÍMITE: Solo agregamos el primer club disponible
-                clubesGrid.appendChild(clubCard);
-                clubesAgregados++; // Incrementamos el contador
-            }
+                    if (
+                        e.target.classList.contains("unirme-btn") ||
+                        e.target.classList.contains("editar-btn")
+                    ) return;
 
-            // Configurar eventos de botones
-            configurarEventosClub(clubCard, club, esMiembro, esCreador, username);
-        });
+                    window.location.href = `club_lectura.html?clubId=${club.id}`;
+                });
+            }
 
             // 2. Agregamos a la grilla
             clubesGrid.appendChild(clubCard);
