@@ -74,21 +74,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const currentUsername = localStorage.getItem("username");
     if (!currentUsername) {
         hideLoader();
-        window.location.href = LOGIN_URL;
+        window.location.href = "LOGIN_URL";
         return;
     }
-    
-    const params = new URLSearchParams(window.location.search);
-    const sectionFromUrl = params.get("section");
-
-    if (sectionFromUrl === "my-clubs") {
-        switchSection("my-clubs");   // ✅ entra directo a Mis clubes
-    } else if (sectionFromUrl === "change-password") {
-        switchSection("change-password");
-    } else {
-        switchSection("edit-profile"); // ✅ por defecto
-    }
-
     
     // Al cargar, siempre mostrar la sección de edición por defecto
     switchSection('edit-profile');
